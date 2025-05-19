@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2D848A9C2DD6BCDE00C7BAA9 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 2D848A9B2DD6BCDE00C7BAA9 /* Sparkle */; };
+		2DD1628E2DC172E0001AD880 /* Settings in Frameworks */ = {isa = PBXBuildFile; productRef = 2DD1628D2DC172E0001AD880 /* Settings */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2D8E19492DB969C800AE060C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2DD1628E2DC172E0001AD880 /* Settings in Frameworks */,
+				2D848A9C2DD6BCDE00C7BAA9 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,8 @@
 			);
 			name = cutepomo;
 			packageProductDependencies = (
+				2DD1628D2DC172E0001AD880 /* Settings */,
+				2D848A9B2DD6BCDE00C7BAA9 /* Sparkle */,
 			);
 			productName = cutepomo;
 			productReference = 2D8E19382DB969C400AE060C /* cutepomo.app */;
@@ -192,9 +201,21 @@
 			knownRegions = (
 				en,
 				Base,
+				de,
+				ar,
+				"zh-Hans",
+				"nl-BE",
+				it,
+				ko,
+				"zh-Hant",
+				ru,
 			);
 			mainGroup = 2D8E192F2DB969C400AE060C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2DD1628C2DC172E0001AD880 /* XCRemoteSwiftPackageReference "Settings" */,
+				2D848A9A2DD6BCDE00C7BAA9 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2D8E19392DB969C400AE060C /* Products */;
 			projectDirPath = "";
@@ -394,6 +415,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = cutepomo/cutepomo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -407,9 +429,9 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = matias.flashcards.cutepomo;
+				PRODUCT_BUNDLE_IDENTIFIER = matias.cutepomo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -422,6 +444,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = cutepomo/cutepomo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -435,9 +458,9 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = matias.flashcards.cutepomo;
+				PRODUCT_BUNDLE_IDENTIFIER = matias.cutepomo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -553,6 +576,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2D848A9A2DD6BCDE00C7BAA9 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.0;
+			};
+		};
+		2DD1628C2DC172E0001AD880 /* XCRemoteSwiftPackageReference "Settings" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/Settings";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2D848A9B2DD6BCDE00C7BAA9 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2D848A9A2DD6BCDE00C7BAA9 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		2DD1628D2DC172E0001AD880 /* Settings */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2DD1628C2DC172E0001AD880 /* XCRemoteSwiftPackageReference "Settings" */;
+			productName = Settings;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2D8E19302DB969C400AE060C /* Project object */;
 }
