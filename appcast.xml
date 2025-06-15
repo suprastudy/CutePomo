@@ -1,0 +1,34 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Cutepomo Updates</title>
+        <description>Actualizaciones para la aplicación Cutepomo</description>
+        <language>es</language>
+        <item>
+            <title>Version 1.0.0</title>
+            <pubDate>Fri, 14 Jun 2024 22:00:00 +0000</pubDate>
+            <sparkle:version>1.0.0</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <description>
+                <![CDATA[
+                    <h2>Primera versión de Cutepomo 🍅</h2>
+                    <ul>
+                        <li>Aplicación de timer Pomodoro con interfaz minimalista</li>
+                        <li>Sistema de actualizaciones automáticas integrado</li>
+                        <li>Configuración de tiempos personalizable</li>
+                        <li>Interfaz siempre visible y flotante</li>
+                        <li>Compatibilidad con macOS 15.0+</li>
+                    </ul>
+                ]]>
+            </description>
+            <link>https://github.com/matiassandoval/cutepomo/releases/tag/v1.0.0</link>
+            <enclosure
+                url="https://github.com/matiassandoval/cutepomo/releases/download/v1.0.0/cutepomo-1.0.0.zip"
+                sparkle:version="1.0.0"
+                sparkle:shortVersionString="1.0.0"
+                length="8500370"
+                type="application/octet-stream"
+                sparkle:edSignature="q3/mtkfspgE5nh8bsA3IqDLwTQvZpL6OmRF9M8CCjbISKglYTQd4pI43ARtgW4aQ2f42XU0lMF7RIsG1qQslCQ==" />
+        </item>
+    </channel>
+</rss> 
