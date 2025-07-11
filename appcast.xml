@@ -6,23 +6,23 @@
         <description>Un pomodoro timer cute y minimalista para macOS</description>
         <language>es</language>
         
-        <!-- Versión actual -->
+        <!-- Versión base actual -->
         <item>
-            <title>Version 1.0.3</title>
+            <title>Version 1.0.0</title>
             <description><![CDATA[
-                <h2>Qué hay de nuevo:</h2>
+                <h2>Versión inicial con Sparkle:</h2>
                 <ul>
-                    <li>Actualizaciones automáticas con Sparkle</li>
-                    <li>Mejoras en la interfaz</li>
-                    <li>Correcciones de bugs</li>
+                    <li>Pomodoro timer funcional</li>
+                    <li>Interfaz minimalista</li>
+                    <li>Sistema de actualizaciones automáticas</li>
                 </ul>
             ]]></description>
-            <pubDate>Thu, 11 Jul 2024 06:34:56 +0000</pubDate>
-            <sparkle:version>1.0.3</sparkle:version>
-            <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
+            <pubDate>Sat, 11 Jan 2025 20:00:00 +0000</pubDate>
+            <sparkle:version>1.0.0</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <enclosure 
-                url="https://github.com/suprastudy/CutePomo/releases/download/v1.0.3/cutepomo-v1.0.3.zip" 
+                url="https://github.com/suprastudy/CutePomo/releases/download/v1.0.0/cutepomo-v1.0.0.zip" 
                 length="PLACEHOLDER_LENGTH" 
                 type="application/octet-stream" 
                 sparkle:edSignature="PLACEHOLDER_SIGNATURE" />
