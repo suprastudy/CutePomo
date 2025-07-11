@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2D4D09572E2186D7007E15DC /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 2D4D09562E2186D7007E15DC /* Sparkle */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2D8E19492DB969C800AE060C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2D4D09572E2186D7007E15DC /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,6 +138,7 @@
 			);
 			name = cutepomo;
 			packageProductDependencies = (
+				2D4D09562E2186D7007E15DC /* Sparkle */,
 			);
 			productName = cutepomo;
 			productReference = 2D8E19382DB969C400AE060C /* cutepomo.app */;
@@ -225,6 +231,7 @@
 			mainGroup = 2D8E192F2DB969C400AE060C;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				2D4D09552E2186D7007E15DC /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2D8E19392DB969C400AE060C /* Products */;
@@ -609,6 +616,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2D4D09552E2186D7007E15DC /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2D4D09562E2186D7007E15DC /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2D4D09552E2186D7007E15DC /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2D8E19302DB969C400AE060C /* Project object */;
 }
