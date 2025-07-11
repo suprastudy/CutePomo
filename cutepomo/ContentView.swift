@@ -1,14 +1,12 @@
 import SwiftUI
-import SwiftData
 import AppKit
 
 struct ContentView: View {
     @AppStorage("monospacedFont") private var monospacedFont: Bool = false
     @State private var isHovered = false
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
     @AppStorage("showDoubleClickText") private var showDoubleClickText: Bool = true
     @AppStorage("alwaysOnTop") private var alwaysOnTop: Bool = false
+    @AppStorage("closeButtonPosition") private var closeButtonPosition: String = "right"
 
     @State private var timeRemaining = 25 * 60
     @State private var timer: Timer? = nil
@@ -19,15 +17,34 @@ struct ContentView: View {
 
     @AppStorage("workDuration") private var workTime: Int = 25 * 60
     @AppStorage("breakDuration") private var breakTime: Int = 5 * 60
+    @AppStorage("workColorRed") private var workColorRed: Double = 0.91
+    @AppStorage("workColorGreen") private var workColorGreen: Double = 0.49
+    @AppStorage("workColorBlue") private var workColorBlue: Double = 0.45
+    @AppStorage("breakColorRed") private var breakColorRed: Double = 0.47
+    @AppStorage("breakColorGreen") private var breakColorGreen: Double = 0.67
+    @AppStorage("breakColorBlue") private var breakColorBlue: Double = 0.62
+
+    // Propiedad computada para obtener el color del modo actual
+    private var currentModeColor: Color {
+        currentMode.color(
+            workColorRed: workColorRed,
+            workColorGreen: workColorGreen,
+            workColorBlue: workColorBlue,
+            breakColorRed: breakColorRed,
+            breakColorGreen: breakColorGreen,
+            breakColorBlue: breakColorBlue
+        )
+    }
 
     enum TimerMode {
         case work
         case break_
 
-        var color: Color {
+        func color(workColorRed: Double, workColorGreen: Double, workColorBlue: Double,
+                  breakColorRed: Double, breakColorGreen: Double, breakColorBlue: Double) -> Color {
             switch self {
-            case .work: return Color(red: 0.91, green: 0.49, blue: 0.45)
-            case .break_: return Color(red: 0.47, green: 0.67, blue: 0.62)
+            case .work: return Color(red: workColorRed, green: workColorGreen, blue: workColorBlue)
+            case .break_: return Color(red: breakColorRed, green: breakColorGreen, blue: breakColorBlue)
             }
         }
 
@@ -48,22 +65,40 @@ struct ContentView: View {
                         VStack(spacing: 0) {
                             Spacer(minLength: 62) // mienrtas mas grande el numero, mas abajo está
                             HStack(spacing: 0) {
-                                Spacer(minLength: 120)  //en 150 se lo ve muy a la derecha
-                                Button(action: {
-                                    if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "MainAppWindow" }) {
-                                        window.orderOut(nil)
+                                if closeButtonPosition == "left" {
+                                    Spacer(minLength: 25)  // Espacio desde el borde izquierdo
+                                    Button(action: {
+                                        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "MainAppWindow" }) {
+                                            window.orderOut(nil)
+                                        }
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.secondary)
+                                            .font(.system(size: 18, weight: .bold))
+                                            .opacity(0.45)
                                     }
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.secondary)
-                                        .font(.system(size: 18, weight: .bold))
-                                        .opacity(0.45)
+                                    .buttonStyle(.plain)
+                                    .frame(width: 28, height: 28, alignment: .topLeading)
+                                    .allowsHitTesting(true)
+                                    Spacer(minLength: 130)  // El resto del espacio hacia la derecha
+                                } else {
+                                    Spacer(minLength: 120)  //en 150 se lo ve muy a la derecha
+                                    Button(action: {
+                                        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "MainAppWindow" }) {
+                                            window.orderOut(nil)
+                                        }
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.secondary)
+                                            .font(.system(size: 18, weight: .bold))
+                                            .opacity(0.45)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .frame(width: 28, height: 28, alignment: .topLeading)
+                                    .allowsHitTesting(true)
                                 }
-                                .buttonStyle(.plain)
-                                .frame(width: 28, height: 28, alignment: .topLeading)
-                                .allowsHitTesting(true)
                             }
-                            Spacer(minLength: 30) 
+                            Spacer(minLength: 30)
                         }
                         .frame(height: 0)
                     }
@@ -74,12 +109,12 @@ struct ContentView: View {
                             if !currentMode.title.isEmpty {
                                 Text(currentMode.title)
                                     .font(.system(size: 12, weight: .medium, design: monospacedFont ? .monospaced : .rounded))
-                                    .foregroundColor(currentMode.color.opacity(0.8))
+                                    .foregroundColor(currentModeColor.opacity(0.8))
                                     .padding(.vertical, 2)
                                     .padding(.horizontal, 8)
                                     .background(
                                         Capsule()
-                                            .fill(currentMode.color.opacity(0.15))
+                                            .fill(currentModeColor.opacity(0.15))
                                     )
                             }
                             
@@ -109,7 +144,7 @@ struct ContentView: View {
                                     .padding(.bottom, -8)
                                 }
                                 HStack(spacing: 16) {
-                                    controlButton(systemName: isActive ? "pause.fill" : "play.fill", action: toggleTimer, color: currentMode.color)
+                                    controlButton(systemName: isActive ? "pause.fill" : "play.fill", action: toggleTimer, color: currentModeColor)
                                     controlButton(systemName: "arrow.counterclockwise", action: resetTimer, color: .secondary)
                                 }
                                 .padding(.top, 0)
@@ -132,7 +167,7 @@ struct ContentView: View {
                 .overlay(
                     GeometryReader { geometry in
                         Rectangle()
-                            .fill(currentMode.color.opacity(0.6))
+                            .fill(currentModeColor.opacity(0.6))
                             .frame(width: geometry.size.width * progress, height: 2)
                             .padding(.top, 1)
                             .frame(maxHeight: .infinity, alignment: .bottom)
@@ -149,7 +184,7 @@ struct ContentView: View {
                 .onDisappear {
                     removeNotificationObservers()
                 }
-                .onChange(of: workTime) { _ in
+                .onChange(of: workTime) {
                     if currentMode == .work {
                         timeRemaining = workTime
                         isActive = false
@@ -157,7 +192,7 @@ struct ContentView: View {
                         timer = nil
                     }
                 }
-                .onChange(of: breakTime) { _ in
+                .onChange(of: breakTime) {
                     if currentMode == .break_ {
                         timeRemaining = breakTime
                         isActive = false
@@ -197,30 +232,15 @@ struct ContentView: View {
             switchMode()
         }
         
-        // Add observers for TimeUpView interactions
-        NotificationCenter.default.addObserver(
-            forName: Notification.Name("StartBreakTimer"),
-            object: nil,
-            queue: .main
-        ) { _ in
-            startBreakTimer()
-        }
+
         
-        NotificationCenter.default.addObserver(
-            forName: Notification.Name("StartWorkTimer"),
-            object: nil,
-            queue: .main
-        ) { _ in
-            startWorkTimer()
-        }
+
     }
     
     private func removeNotificationObservers() {
         NotificationCenter.default.removeObserver(self, name: Notification.Name("ToggleTimer"), object: nil)
         NotificationCenter.default.removeObserver(self, name: Notification.Name("ResetTimer"), object: nil)
         NotificationCenter.default.removeObserver(self, name: Notification.Name("SwitchTimerMode"), object: nil)
-        NotificationCenter.default.removeObserver(self, name: Notification.Name("StartBreakTimer"), object: nil)
-        NotificationCenter.default.removeObserver(self, name: Notification.Name("StartWorkTimer"), object: nil)
     }
 
     @ViewBuilder
@@ -229,13 +249,10 @@ struct ContentView: View {
             Image(systemName: systemName)
                 .font(.system(size: 16, weight: .semibold))
                 .padding(10)
-                .background(
-                    Circle()
-                        .fill(.thinMaterial)
-                )
                 .foregroundColor(color)
         }
         .buttonStyle(.plain)
+        .contentShape(Circle())
     }
 
     private func onHoverChanged(_ hovering: Bool) {
@@ -267,14 +284,6 @@ struct ContentView: View {
     private var dragGesture: some Gesture {
         DragGesture()
             .onChanged { gesture in
-                if let window = NSApp.windows.first {
-                    let currentPosition = window.frame.origin
-                    let newPosition = NSPoint(
-                        x: currentPosition.x + gesture.location.x - gesture.startLocation.x,
-                        y: currentPosition.y - gesture.location.y + gesture.startLocation.y
-                    )
-                    window.setFrameOrigin(newPosition)
-                }
             }
     }
 
@@ -305,7 +314,7 @@ struct ContentView: View {
                     timer = nil
                     isActive = false
                     didShowTimeUp = true
-                    showTimeUpWindow()
+                    handleTimerCompletion()
                 }
             })
             RunLoop.current.add(timer!, forMode: .common)
@@ -357,87 +366,16 @@ struct ContentView: View {
         }
     }
 
-    // Abre una nueva ventana con TimeUpView
-    private func showTimeUpWindow() {
-        let timeUpWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 340),
-            styleMask: [.borderless, .fullSizeContentView],
-            backing: .buffered,
-            defer: true
-        )
-        
-        timeUpWindow.center()
-        timeUpWindow.contentView = NSHostingView(rootView: TimeUpView())
-        timeUpWindow.isMovableByWindowBackground = true
-        timeUpWindow.titleVisibility = .hidden
-        timeUpWindow.titlebarAppearsTransparent = true
-        timeUpWindow.standardWindowButton(.closeButton)?.isHidden = true
-        timeUpWindow.standardWindowButton(.miniaturizeButton)?.isHidden = true
-        timeUpWindow.standardWindowButton(.zoomButton)?.isHidden = true
-        
-        // Redondear la ventana físicamente
-        if let contentView = timeUpWindow.contentView?.superview {
-            contentView.wantsLayer = true
-            contentView.layer?.cornerRadius = 14
-            contentView.layer?.maskedCorners = [
-                .layerMinXMinYCorner, .layerMaxXMinYCorner,
-                .layerMinXMaxYCorner, .layerMaxXMaxYCorner
-            ]
-            contentView.layer?.masksToBounds = true
-        }
-        
-        timeUpWindow.makeKeyAndOrderFront(nil)
-        
+    // Timer completion handler
+    private func handleTimerCompletion() {
         // Reproducir el sonido de notificación
         NSSound.beep()
+        
+        // Auto-switch to the next mode
+        switchMode()
     }
 
-    // Helper methods for TimeUpView interactions
-    private func startBreakTimer() {
-        if currentMode != .break_ {
-            currentMode = .break_
-        }
-        timeRemaining = breakTime
-        isActive = true
-        didShowTimeUp = false
-        
-        // Start the timer
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
-            if self.timeRemaining > 0 {
-                self.timeRemaining -= 1
-            } else if !self.didShowTimeUp {
-                self.timer?.invalidate()
-                self.timer = nil
-                self.isActive = false
-                self.didShowTimeUp = true
-                self.showTimeUpWindow()
-            }
-        })
-        RunLoop.current.add(timer!, forMode: .common)
-    }
+
     
-    private func startWorkTimer() {
-        if currentMode != .work {
-            currentMode = .work
-        }
-        timeRemaining = workTime
-        isActive = true
-        didShowTimeUp = false
-        
-        // Start the timer
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
-            if self.timeRemaining > 0 {
-                self.timeRemaining -= 1
-            } else if !self.didShowTimeUp {
-                self.timer?.invalidate()
-                self.timer = nil
-                self.isActive = false
-                self.didShowTimeUp = true
-                self.showTimeUpWindow()
-            }
-        })
-        RunLoop.current.add(timer!, forMode: .common)
-    }
+
 }

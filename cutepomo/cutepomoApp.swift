@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 import AppKit
 import Sparkle
 
@@ -18,23 +17,57 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 struct cutepomoApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @AppStorage("alwaysOnTop") private var alwaysOnTop: Bool = false
-    @StateObject private var updaterController = UpdaterController()
+    @StateObject private var updaterManager = UpdaterManager.shared
     
     var body: some Scene {
         WindowGroup {
             MainContentView()
-                .modelContainer(for: Item.self, inMemory: true)
         }
         .windowResizability(.contentSize)
         .defaultSize(width: 140, height: 70)
         .defaultPosition(.center)
         .windowStyle(.hiddenTitleBar)
         .commands {
+            // App Info Commands  
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates...") {
-                    updaterController.checkForUpdates()
+                    updaterManager.checkForUpdates()
                 }
-                .disabled(!updaterController.canCheckForUpdates)
+                .disabled(!updaterManager.canCheckForUpdates)
+            }
+            
+            // Timer Commands
+            CommandGroup(replacing: .newItem) {
+                Button("Start/Pause") {
+                    NotificationCenter.default.post(name: Notification.Name("ToggleTimer"), object: nil)
+                }
+                .keyboardShortcut(.space, modifiers: .command)
+                
+                Button("Reset") {
+                    NotificationCenter.default.post(name: Notification.Name("ResetTimer"), object: nil)
+                }
+                .keyboardShortcut("r", modifiers: .command)
+                
+                Button("Switch Mode") {
+                    NotificationCenter.default.post(name: Notification.Name("SwitchTimerMode"), object: nil)
+                }
+                .keyboardShortcut("t", modifiers: .command)
+            }
+            
+            // View Commands
+            CommandGroup(after: .toolbar) {
+                Button(alwaysOnTop ? "Float Window: ON" : "Float Window: OFF") {
+                    alwaysOnTop.toggle()
+                    updateMainWindowLevel(alwaysOnTop: alwaysOnTop)
+                }
+                .keyboardShortcut("f", modifiers: .command)
+            }
+            
+            // Help Commands
+            CommandGroup(replacing: .help) {
+                Button("About cutepomo") {
+                    NSApp.orderFrontStandardAboutPanel(nil)
+                }
             }
         }
         
@@ -54,4 +87,6 @@ private func updateMainWindowLevel(alwaysOnTop: Bool) {
         }
     }
 }
+
+
 

@@ -1,60 +1,57 @@
-<?xml version="1.0" standalone="yes"?>
-<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
     <channel>
-        <title>Cutepomo Updates</title>
-        <description>Actualizaciones para la aplicación Cutepomo</description>
-        <language>es</language>
+        <title>cutepomo Updates</title>
+        <description>Most recent updates to cutepomo</description>
+        <language>en</language>
+        <link>https://github.com/suprastudy/CutePomo</link>
+        
         <item>
             <title>Version 1.0.1</title>
-            <pubDate>Sat, 15 Jun 2024 05:04:00 +0000</pubDate>
-            <sparkle:version>1.0.1</sparkle:version>
-            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
-            <description>
-                <![CDATA[
-                    <h2>Cutepomo v1.0.1 🍅</h2>
-                    <ul>
-                        <li>🔄 Sistema de actualizaciones automáticas mejorado</li>
-                        <li>🐛 Correcciones menores de bugs</li>
-                        <li>⚡ Mejoras de rendimiento</li>
-                        <li>🎨 Interfaz optimizada</li>
-                        <li>✅ Compatibilidad con macOS 15.0+</li>
-                    </ul>
-                ]]>
-            </description>
-            <link>https://github.com/suprastudy/CutePomo/releases/tag/v1.0.1</link>
-            <enclosure
-                url="https://github.com/suprastudy/CutePomo/releases/download/v1.0.1/cutepomo-1.0.1.zip"
+            <sparkle:releaseNotesLink>https://github.com/suprastudy/CutePomo/releases/tag/v1.0.1</sparkle:releaseNotesLink>
+            <description><![CDATA[
+                <h3>Version 1.0.1 - Improvements & Fixes</h3>
+                <ul>
+                    <li>✨ Enhanced automatic update system</li>
+                    <li>🐛 Bug fixes and stability improvements</li>
+                    <li>⚡ Performance optimizations</li>
+                    <li>🎨 Refined user interface</li>
+                    <li>🖥️ Full compatibility with macOS 15.0+</li>
+                </ul>
+            ]]></description>
+            <pubDate>Thu, 07 Nov 2024 19:20:11 +0000</pubDate>
+            <enclosure 
+                url="https://github.com/suprastudy/CutePomo/releases/download/v1.0.1/cutepomo-v1.0.1.zip"
                 sparkle:version="1.0.1"
                 sparkle:shortVersionString="1.0.1"
-                length="8501475"
+                length="PLACEHOLDER_LENGTH"
                 type="application/octet-stream"
-                sparkle:edSignature="C8ECs4nVpuRJ3mEmOd8U2tSffpzknFANopmaoR9fR0axF9N4wL4ghZnHkY9n0P6g1wB4n2SuNWPLYYYZKiaCDg==" />
+                sparkle:edSignature="PLACEHOLDER_SIGNATURE" />
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
         </item>
+        
         <item>
             <title>Version 1.0.0</title>
-            <pubDate>Fri, 14 Jun 2024 22:00:00 +0000</pubDate>
-            <sparkle:version>1.0.0</sparkle:version>
-            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
-            <description>
-                <![CDATA[
-                    <h2>Primera versión de Cutepomo 🍅</h2>
-                    <ul>
-                        <li>Aplicación de timer Pomodoro con interfaz minimalista</li>
-                        <li>Sistema de actualizaciones automáticas integrado</li>
-                        <li>Configuración de tiempos personalizable</li>
-                        <li>Interfaz siempre visible y flotante</li>
-                        <li>Compatibilidad con macOS 15.0+</li>
-                    </ul>
-                ]]>
-            </description>
-            <link>https://github.com/suprastudy/CutePomo/releases/tag/v1.0.0</link>
-            <enclosure
-                url="https://github.com/suprastudy/CutePomo/releases/download/v1.0.0/cutepomo-1.0.0.zip"
+            <sparkle:releaseNotesLink>https://github.com/suprastudy/CutePomo/releases/tag/v1.0.0</sparkle:releaseNotesLink>
+            <description><![CDATA[
+                <h3>Version 1.0.0 - Initial Release</h3>
+                <ul>
+                    <li>🍅 Minimalist Pomodoro timer</li>
+                    <li>🔄 Automatic updates support</li>
+                    <li>🎈 Floating window interface</li>
+                    <li>⚙️ Customizable settings</li>
+                    <li>🎨 Beautiful, clean design</li>
+                </ul>
+            ]]></description>
+            <pubDate>Wed, 06 Nov 2024 19:20:11 +0000</pubDate>
+            <enclosure 
+                url="https://github.com/suprastudy/CutePomo/releases/download/v1.0.0/cutepomo-v1.0.0.zip"
                 sparkle:version="1.0.0"
                 sparkle:shortVersionString="1.0.0"
-                length="8501475"
+                length="PLACEHOLDER_LENGTH"
                 type="application/octet-stream"
-                sparkle:edSignature="hoU+A+TyCr3Zio7Te3VHh/zbuDtIwoWkoYtJFfR5mEU=" />
+                sparkle:edSignature="PLACEHOLDER_SIGNATURE" />
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
         </item>
     </channel>
 </rss> 

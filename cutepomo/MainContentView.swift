@@ -34,23 +34,20 @@ fileprivate func assignMainWindowIdentifier() {
 
 struct MainContentView: View {
     @AppStorage("alwaysOnTop") private var alwaysOnTop: Bool = false
-    @ObservedObject private var licenseManager = LicenseManager.shared
     
     var body: some View {
-        LicenseCheckView {
-            ContentView()
-                .onAppear {
-                    assignMainWindowIdentifier()
-                    // Espera breve para asegurar que el identificador esté asignado
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        configureWindow()
-                        updateWindowLevel(alwaysOnTop: self.alwaysOnTop)
-                    }
+        ContentView()
+            .onAppear {
+                assignMainWindowIdentifier()
+                // Espera breve para asegurar que el identificador esté asignado
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    configureWindow()
+                    updateWindowLevel(alwaysOnTop: self.alwaysOnTop)
                 }
-                .onChange(of: alwaysOnTop) { _, newValue in
-                    updateWindowLevel(alwaysOnTop: newValue)
-                }
-        }
+            }
+            .onChange(of: alwaysOnTop) { _, newValue in
+                updateWindowLevel(alwaysOnTop: newValue)
+            }
     }
     
     private func configureWindow() {

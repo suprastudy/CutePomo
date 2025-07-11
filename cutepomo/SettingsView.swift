@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Sparkle
 
 struct PomodoroPreset: Codable, Hashable, Identifiable {
     var id: UUID = UUID()
@@ -184,7 +185,7 @@ struct PresetsList: View {
                                 self.showScrollIndicator = true
                                 self.hasScrolled = false
                             }
-                            .onChange(of: geo.size.height) { newHeight in
+                            .onChange(of: geo.size.height) { _, newHeight in
                                 self.contentHeight = newHeight
                             }
                         })
@@ -200,7 +201,7 @@ struct PresetsList: View {
                     Color.clear.onAppear {
                         self.scrollViewHeight = geo.size.height
                     }
-                    .onChange(of: geo.size.height) { newHeight in
+                    .onChange(of: geo.size.height) { _, newHeight in
                         self.scrollViewHeight = newHeight
                     }
                 })
@@ -224,7 +225,7 @@ struct PresetsList: View {
                             }
                         }
                 )
-                .onChange(of: presets.count) { newCount in
+                .onChange(of: presets.count) { _, newCount in
                     // Si el número de presets cambia, volvemos a mostrar el indicador
                     if presetsCount != newCount {
                         self.hasScrolled = false
@@ -388,6 +389,61 @@ struct ToggleStyleView: View {
     }
 }
 
+// Componente para selección de posición del botón de cierre con el mismo estilo que ShapeSelectorView
+struct CloseButtonPositionSelectorView: View {
+    enum CloseButtonPosition: String, CaseIterable {
+        case left = "< Left >"
+        case right = "< Right >"
+
+        mutating func toggle() {
+            self = CloseButtonPosition.allCases.first(where: { $0 != self })!
+        }
+    }
+
+    @Binding var position: String
+    @Environment(\.colorScheme) private var colorScheme
+    
+    private var currentPosition: CloseButtonPosition {
+        position == "left" ? .left : .right
+    }
+    
+    private var backgroundOpacity: Double {
+        colorScheme == .dark ? 0.15 : 0.08
+    }
+    
+    private var borderOpacity: Double {
+        colorScheme == .dark ? 0.4 : 0.25
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button(action: {
+                position = position == "left" ? "right" : "left"
+            }) {
+                HStack {
+                    Text("Close button position")
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text(currentPosition.rawValue)
+                        .foregroundColor(.secondary)
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(NSColor.controlBackgroundColor).opacity(colorScheme == .dark ? 0.7 : 0.9))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(borderOpacity), lineWidth: 1)
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 0)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 struct SettingsView: View {
     @AppStorage("workDuration") private var workDuration: Int = 25 * 60
     @AppStorage("breakDuration") private var breakDuration: Int = 5 * 60
@@ -395,6 +451,14 @@ struct SettingsView: View {
     @AppStorage("alwaysOnTop") private var alwaysOnTop: Bool = false
     @AppStorage("monospacedFont") private var monospacedFont: Bool = false
     @AppStorage("showDoubleClickText") private var showDoubleClickText: Bool = true
+    @AppStorage("closeButtonPosition") private var closeButtonPosition: String = "left"
+    @StateObject private var updaterManager = UpdaterManager.shared
+    @AppStorage("workColorRed") private var workColorRed: Double = 0.91
+    @AppStorage("workColorGreen") private var workColorGreen: Double = 0.49
+    @AppStorage("workColorBlue") private var workColorBlue: Double = 0.45
+    @AppStorage("breakColorRed") private var breakColorRed: Double = 0.47
+    @AppStorage("breakColorGreen") private var breakColorGreen: Double = 0.67
+    @AppStorage("breakColorBlue") private var breakColorBlue: Double = 0.62
     
     @State private var presets: [PomodoroPreset] = []
     @State private var editingPreset: PomodoroPreset?
@@ -420,13 +484,9 @@ struct SettingsView: View {
             // ABOUT TAB
             aboutTab
             
-            LicenseSettingsView()
-                .tabItem {
-                    Label("Licencia", systemImage: "key.fill")
-                }
+
         }
         .frame(width: 500, height: 350)
-        .padding()
         // Edit Sheet
         .sheet(isPresented: $showingEditSheet) {
             if let preset = editingPreset {
@@ -481,6 +541,7 @@ struct SettingsView: View {
     // MARK: - Tab Views
     
     private var generalTab: some View {
+        ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 GroupBox(label: Label("Appearance", systemImage: "paintbrush")
                     .font(.headline)) {
@@ -490,17 +551,93 @@ struct SettingsView: View {
                         ToggleStyleView(title: "Keep window always on top", isOn: $alwaysOnTop)
                         
                         ToggleStyleView(title: "Show 'double click to switch' instruction", isOn: $showDoubleClickText)
+                        
+                        // Close button position setting
+                        CloseButtonPositionSelectorView(position: $closeButtonPosition)
                     }
                     .padding(.horizontal, 5)
                     .padding(.vertical, 10)
                 }
                 
-                Spacer()
-            }
-            .tabItem {
-                Label("General", systemImage: "gearshape")
+                GroupBox(label: Label("Color", systemImage: "paintpalette")
+                    .font(.headline)) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ColorSelectorView(
+                            title: "Work Timer Color",
+                            red: $workColorRed,
+                            green: $workColorGreen,
+                            blue: $workColorBlue
+                        )
+                        
+                        ColorSelectorView(
+                            title: "Break Timer Color",
+                            red: $breakColorRed,
+                            green: $breakColorGreen,
+                            blue: $breakColorBlue
+                        )
+                    }
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 10)
+                }
+                
+                GroupBox(label: Label("Updates", systemImage: "arrow.triangle.2.circlepath")
+                    .font(.headline)) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ToggleStyleView(
+                            title: "Check for updates automatically", 
+                            isOn: Binding(
+                                get: { updaterManager.automaticallyChecksForUpdates },
+                                set: { updaterManager.automaticallyChecksForUpdates = $0 }
+                            )
+                        )
+                        
+                        ToggleStyleView(
+                            title: "Download updates automatically", 
+                            isOn: Binding(
+                                get: { updaterManager.automaticallyDownloadsUpdates },
+                                set: { updaterManager.automaticallyDownloadsUpdates = $0 }
+                            )
+                        )
+                        
+                        Button(action: {
+                            updaterManager.checkForUpdates()
+                        }) {
+                            HStack {
+                                Text("Check for Updates Now")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                if updaterManager.isCheckingForUpdates {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(NSColor.controlBackgroundColor).opacity(0.7))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .disabled(!updaterManager.canCheckForUpdates)
+                    }
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 10)
+                }
+                
+                Spacer(minLength: 20)
             }
             .padding(20)
+        }
+        .tabItem {
+            Label("General", systemImage: "gearshape")
+        }
     }
     
     private var presetsTab: some View {
@@ -512,7 +649,7 @@ struct SettingsView: View {
                 Label("Presets", systemImage: "square.grid.2x2")
             }
             .padding(20)
-        .onChange(of: showingEditSheet) { newValue in
+        .onChange(of: showingEditSheet) { _, newValue in
             if !newValue {
                 editingPreset = nil
             }
@@ -521,25 +658,80 @@ struct SettingsView: View {
     
     private var aboutTab: some View {
             VStack(spacing: 20) {
-                Image(systemName: "timer.circle.fill")
+                // App icon using Icon-mac-512
+                Image("Icon-mac-512")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 80, height: 80)
-                    .foregroundColor(.accentColor)
+                    .frame(width: 100, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
                     .padding(.top, 20)
                 
-                Text("Cutepomo")
-                    .font(.title)
-                    .fontWeight(.bold)
+                VStack(spacing: 8) {
+                    Text("Cutepomo")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    
+                    Text("Version 1.0")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
                 
-                Text("Version 1.0")
-                    .foregroundColor(.secondary)
+                VStack(spacing: 12) {
+                    Text("A beautiful, minimal pomodoro timer")
+                        .font(.body)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Focus on your work with style")
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                }
                 
-                Text("A beautiful, minimal pomodoro timer")
-                    .font(.subheadline)
+                Spacer()
                 
-                Text("Made with ❤️ by Matiassandoval")
-                    .padding(.top, 10)
+                VStack(spacing: 12) {
+                    Text("Made with ❤️ by Matias Sandoval")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    // Social media links
+                    HStack(spacing: 16) {
+                        Link(destination: URL(string: "https://instagram.com/matijrn")!) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "camera.fill")
+                                Text("@matijrn")
+                            }
+                            .font(.caption)
+                            .foregroundColor(.pink)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.pink.opacity(0.1))
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        Link(destination: URL(string: "https://twitter.com/matijrn")!) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "bird.fill")
+                                Text("@matijrn")
+                            }
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
+                    Text("© 2024 Cutepomo")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.7))
+                }
+                //.padding(.bottom, 20)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .tabItem {
@@ -840,6 +1032,84 @@ struct CreatePresetView: View {
         }
         .padding()
         .frame(width: 400, height: 350)
+    }
+}
+
+// Componente para selección de colores
+struct ColorSelectorView: View {
+    let title: String
+    @Binding var red: Double
+    @Binding var green: Double
+    @Binding var blue: Double
+    
+    @Environment(\.colorScheme) private var colorScheme
+    
+    private var currentColor: Color {
+        Color(red: red, green: green, blue: blue)
+    }
+    
+    private var backgroundOpacity: Double {
+        colorScheme == .dark ? 0.7 : 0.9
+    }
+    
+    private var borderOpacity: Double {
+        colorScheme == .dark ? 0.4 : 0.25
+    }
+    
+    // Colores predefinidos
+    private let predefinedColors: [(String, Double, Double, Double)] = [
+        ("Red", 0.91, 0.49, 0.45),
+        ("Green", 0.47, 0.67, 0.62),
+        ("Blue", 0.2, 0.6, 0.86),
+        ("Purple", 0.68, 0.46, 0.82),
+        ("Orange", 0.96, 0.65, 0.14),
+        ("Pink", 0.96, 0.41, 0.64),
+        ("Yellow", 0.98, 0.84, 0.25),
+        ("Indigo", 0.35, 0.34, 0.84)
+    ]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.primary)
+            
+            // Fila de colores predefinidos
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 8), spacing: 8) {
+                ForEach(predefinedColors, id: \.0) { colorData in
+                    let (_, r, g, b) = colorData
+                    let color = Color(red: r, green: g, blue: b)
+                    let isSelected = abs(red - r) < 0.01 && abs(green - g) < 0.01 && abs(blue - b) < 0.01
+                    
+                    Button(action: {
+                        red = r
+                        green = g
+                        blue = b
+                    }) {
+                        Circle()
+                            .fill(color)
+                            .frame(width: 24, height: 24)
+                            .overlay(
+                                Circle()
+                                    .stroke(isSelected ? Color.primary : Color.gray.opacity(0.3), 
+                                           lineWidth: isSelected ? 2 : 1)
+                            )
+                            .scaleEffect(isSelected ? 1.1 : 1.0)
+                    }
+                    .buttonStyle(.plain)
+                    .animation(.easeInOut(duration: 0.1), value: isSelected)
+                }
+            }
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(NSColor.controlBackgroundColor).opacity(backgroundOpacity))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.gray.opacity(borderOpacity), lineWidth: 1)
+        )
     }
 }
 
