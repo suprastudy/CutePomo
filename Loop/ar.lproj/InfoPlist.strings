@@ -1,9 +1,0 @@
-/* Bundle display name */
-"CFBundleDisplayName" = "لوب";
-
-/* Bundle name */
-"CFBundleName" = "لوب";
-
-/* Copyright (human-readable) */
-"NSHumanReadableCopyright" = "حقوق النشر © 2024 لوب";
-

@@ -46,12 +46,14 @@
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/suprastudy/CutePomo/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>hoU+A+TyCr3Zio7Te3VHh/zbuDtIwoWkoYtJFfR5mEU=</string>
+	<string>V5hmCzn/r/RWmxncQaLoH9UdTaKf2pGhwzT3L+aWJUA=</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
-	<key>SUAllowsAutomaticUpdates</key>
+	<key>SUCheckAtStartup</key>
 	<true/>
 	<key>SUScheduledCheckInterval</key>
 	<integer>86400</integer>
+	<key>SUEnableDownloadResumption</key>
+	<true/>
 </dict>
 </plist>

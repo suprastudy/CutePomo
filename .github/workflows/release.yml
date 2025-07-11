@@ -1,154 +1,180 @@
-name: Release and Update
+name: Build and Release cutepomo
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:  # Allows manual trigger
+
+env:
+  APP_NAME: cutepomo
 
 jobs:
   build-and-release:
-    runs-on: macos-15
+    runs-on: macos-latest
     
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
       
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: '16.0'
+        xcode-version: latest-stable
         
-    - name: Import Code Signing Certificate
-      env:
-        P12_CERTIFICATE: ${{ secrets.P12_CERTIFICATE }}
-        P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
-      run: |
-        echo "$P12_CERTIFICATE" | base64 --decode > certificate.p12
-        security create-keychain -p "temp" temp.keychain
-        security default-keychain -s temp.keychain
-        security unlock-keychain -p "temp" temp.keychain
-        security import certificate.p12 -k temp.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
-        security set-key-partition-list -S apple-tool:,apple: -s -k "temp" temp.keychain
-        rm certificate.p12
-    
-    - name: Build Release
-      run: |
-        xcodebuild -scheme cutepomo -configuration Release \
-          -archivePath cutepomo.xcarchive archive \
-          -destination "platform=macOS,arch=x86_64" \
-          CODE_SIGN_IDENTITY="Developer ID Application" \
-          -allowProvisioningUpdates
-          
-    - name: Export Application
-      run: |
-        cat > ExportOptions.plist << EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>method</key>
-            <string>developer-id</string>
-            <key>teamID</key>
-            <string>U586VKZ2JZ</string>
-        </dict>
-        </plist>
-        EOF
-        
-        xcodebuild -exportArchive \
-          -archivePath cutepomo.xcarchive \
-          -exportPath . \
-          -exportOptionsPlist ExportOptions.plist
-          
-    - name: Get version
+    - name: Get version from tag
       id: version
       run: |
-        VERSION=${GITHUB_REF#refs/tags/}
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "version_number=${VERSION#v}" >> $GITHUB_OUTPUT
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION="dev-$(date +%Y%m%d-%H%M%S)"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
         
-    - name: Create ZIP package
+    - name: Update version in Xcode project
       run: |
-        cd cutepomo
-        zip -r ../cutepomo-${{ steps.version.outputs.version }}.zip cutepomo.app
-        cd ..
+        xcrun agvtool new-marketing-version ${{ steps.version.outputs.VERSION }}
         
-    - name: Setup Sparkle tools
+    - name: Install dependencies
       run: |
-        # Download latest Sparkle tools
-        curl -L "https://github.com/sparkle-project/Sparkle/releases/download/2.6.4/Sparkle-2.6.4.tar.xz" | tar -xJ
-        chmod +x Sparkle-2.6.4/bin/*
+        # Install Sparkle for signing
+        if ! command -v generate_keys &> /dev/null; then
+          echo "Installing Sparkle..."
+          brew install sparkle
+        fi
         
-    - name: Create private key file
-      env:
-        SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+    - name: Build app
       run: |
-        echo "$SPARKLE_PRIVATE_KEY" > sparkle_private_key.pem
-        
-    - name: Sign update
+        echo "🔨 Building $APP_NAME..."
+        xcodebuild archive \
+          -project $APP_NAME.xcodeproj \
+          -scheme $APP_NAME \
+          -configuration Release \
+          -archivePath build/$APP_NAME.xcarchive \
+          -destination "generic/platform=macOS" \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
+          
+    - name: Export app
       run: |
-        SIGNATURE=$(./Sparkle-2.6.4/bin/sign_update cutepomo-${{ steps.version.outputs.version }}.zip -f sparkle_private_key.pem)
-        echo "SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
+        echo "📦 Exporting $APP_NAME..."
+        mkdir -p build/export
+        cp -R build/$APP_NAME.xcarchive/Products/Applications/$APP_NAME.app build/export/
         
-        # Get file size
-        SIZE=$(wc -c < cutepomo-${{ steps.version.outputs.version }}.zip | tr -d ' ')
-        echo "SIZE=$SIZE" >> $GITHUB_ENV
-        
-    - name: Update appcast
+    - name: Create release archive
       run: |
-        # Create a new appcast entry
-        cat > new_entry.xml << EOF
+        echo "🗜️ Creating release archive..."
+        cd build/export
+        zip -r ../$APP_NAME-v${{ steps.version.outputs.VERSION }}.zip $APP_NAME.app
+        cd ../..
+        
+    - name: Get file size and signature
+      id: release_info
+      run: |
+        FILE_SIZE=$(stat -f%z "build/$APP_NAME-v${{ steps.version.outputs.VERSION }}.zip")
+        echo "FILE_SIZE=$FILE_SIZE" >> $GITHUB_OUTPUT
+        
+        # Sign the archive with Sparkle
+        if [[ -n "${{ secrets.SPARKLE_PRIVATE_KEY }}" ]]; then
+          echo "${{ secrets.SPARKLE_PRIVATE_KEY }}" > /tmp/sparkle_private_key
+          SIGNATURE=$(sign_update "build/$APP_NAME-v${{ steps.version.outputs.VERSION }}.zip" /tmp/sparkle_private_key)
+          echo "SIGNATURE=$SIGNATURE" >> $GITHUB_OUTPUT
+          rm /tmp/sparkle_private_key
+        else
+          echo "⚠️ Warning: SPARKLE_PRIVATE_KEY not set, using placeholder"
+          echo "SIGNATURE=PLACEHOLDER_SIGNATURE" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Update appcast.xml
+      run: |
+        echo "📝 Updating appcast.xml..."
+        
+        # Get current date in RFC 2822 format
+        PUBDATE=$(date -R)
+        
+        # Create new version entry
+        cat > new_version.xml << EOF
         <item>
-            <title>Version ${{ steps.version.outputs.version_number }}</title>
-            <sparkle:releaseNotesLink>https://github.com/suprastudy/CutePomo/releases/tag/${{ steps.version.outputs.version }}</sparkle:releaseNotesLink>
+            <title>Version ${{ steps.version.outputs.VERSION }}</title>
             <description><![CDATA[
-                <h3>Version ${{ steps.version.outputs.version_number }}</h3>
-                <p>See the <a href="https://github.com/suprastudy/CutePomo/releases/tag/${{ steps.version.outputs.version }}">release notes</a> for details.</p>
+                <h2>Qué hay de nuevo en v${{ steps.version.outputs.VERSION }}:</h2>
+                <ul>
+                    <li>Nuevas características y mejoras</li>
+                    <li>Corrección de errores</li>
+                    <li>Optimizaciones de rendimiento</li>
+                </ul>
             ]]></description>
-            <pubDate>$(date -u +"%a, %d %b %Y %H:%M:%S %z")</pubDate>
-            <enclosure 
-                url="https://github.com/suprastudy/CutePomo/releases/download/${{ steps.version.outputs.version }}/cutepomo-${{ steps.version.outputs.version }}.zip"
-                sparkle:version="${{ steps.version.outputs.version_number }}"
-                sparkle:shortVersionString="${{ steps.version.outputs.version_number }}"
-                length="$SIZE"
-                type="application/octet-stream"
-                sparkle:edSignature="$SIGNATURE" />
+            <pubDate>$PUBDATE</pubDate>
+            <sparkle:version>${{ steps.version.outputs.VERSION }}</sparkle:version>
+            <sparkle:shortVersionString>${{ steps.version.outputs.VERSION }}</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure 
+                url="https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.VERSION }}/$APP_NAME-v${{ steps.version.outputs.VERSION }}.zip" 
+                length="${{ steps.release_info.outputs.FILE_SIZE }}" 
+                type="application/octet-stream" 
+                sparkle:edSignature="${{ steps.release_info.outputs.SIGNATURE }}" />
         </item>
+        
+        <!-- Previous version: -->
         EOF
         
-        # Insert new entry into appcast.xml (after the first item opening tag)
+        # Insert new version at the top of items in appcast.xml
         awk '
-        /<item>/ && !inserted {
+        /<channel>/ { in_channel = 1 }
+        in_channel && /<!-- Versión actual -->/ {
             print
-            while ((getline line < "new_entry.xml") > 0) print "        " line
-            inserted = 1
+            getline
+            while ((getline line < "new_version.xml") > 0) {
+                print "        " line
+            }
+            close("new_version.xml")
             next
         }
-        {print}
+        { print }
         ' appcast.xml > appcast_updated.xml
         
         mv appcast_updated.xml appcast.xml
-        rm new_entry.xml
+        rm new_version.xml
         
-    - name: Commit and push appcast
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add appcast.xml
-        git commit -m "Update appcast for ${{ steps.version.outputs.version }}" || exit 0
-        git push origin HEAD:main
+                          # Update GitHub URL placeholder
+         sed -i '' "s|https://github.com/suprastudy/CutePomo|https://github.com/${{ github.repository }}|g" appcast.xml
         
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v1
       with:
-        files: cutepomo-${{ steps.version.outputs.version }}.zip
-        generate_release_notes: true
+        files: build/${{ env.APP_NAME }}-v${{ steps.version.outputs.VERSION }}.zip
+        name: "cutepomo v${{ steps.version.outputs.VERSION }}"
+        body: |
+          ## 🎉 Nueva versión de cutepomo!
+          
+          ### Qué hay de nuevo:
+          - Mejoras en el rendimiento
+          - Corrección de errores
+          - Nuevas características
+          
+          ### Instalación:
+          1. Descarga el archivo ZIP
+          2. Extráelo y arrastra cutepomo.app a tu carpeta Applications
+          3. ¡Disfruta!
+          
+          ### Actualizaciones automáticas:
+          Esta versión incluye actualizaciones automáticas con Sparkle. Las futuras versiones se instalarán automáticamente.
         draft: false
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: Cleanup
+    - name: Commit updated appcast.xml
       run: |
-        rm -f sparkle_private_key.pem
-        security delete-keychain temp.keychain || true 
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add appcast.xml
+        if git diff --staged --quiet; then
+          echo "No changes to appcast.xml"
+        else
+          git commit -m "Update appcast.xml for v${{ steps.version.outputs.VERSION }}"
+          git push origin main
+        fi 

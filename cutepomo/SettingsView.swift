@@ -1,6 +1,5 @@
 import SwiftUI
 import AppKit
-import Sparkle
 
 struct PomodoroPreset: Codable, Hashable, Identifiable {
     var id: UUID = UUID()
@@ -452,7 +451,6 @@ struct SettingsView: View {
     @AppStorage("monospacedFont") private var monospacedFont: Bool = false
     @AppStorage("showDoubleClickText") private var showDoubleClickText: Bool = true
     @AppStorage("closeButtonPosition") private var closeButtonPosition: String = "left"
-    @StateObject private var updaterManager = UpdaterManager.shared
     @AppStorage("workColorRed") private var workColorRed: Double = 0.91
     @AppStorage("workColorGreen") private var workColorGreen: Double = 0.49
     @AppStorage("workColorBlue") private var workColorBlue: Double = 0.45
@@ -575,57 +573,6 @@ struct SettingsView: View {
                             green: $breakColorGreen,
                             blue: $breakColorBlue
                         )
-                    }
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 10)
-                }
-                
-                GroupBox(label: Label("Updates", systemImage: "arrow.triangle.2.circlepath")
-                    .font(.headline)) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        ToggleStyleView(
-                            title: "Check for updates automatically", 
-                            isOn: Binding(
-                                get: { updaterManager.automaticallyChecksForUpdates },
-                                set: { updaterManager.automaticallyChecksForUpdates = $0 }
-                            )
-                        )
-                        
-                        ToggleStyleView(
-                            title: "Download updates automatically", 
-                            isOn: Binding(
-                                get: { updaterManager.automaticallyDownloadsUpdates },
-                                set: { updaterManager.automaticallyDownloadsUpdates = $0 }
-                            )
-                        )
-                        
-                        Button(action: {
-                            updaterManager.checkForUpdates()
-                        }) {
-                            HStack {
-                                Text("Check for Updates Now")
-                                    .foregroundColor(.primary)
-                                Spacer()
-                                if updaterManager.isCheckingForUpdates {
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                } else {
-                                    Image(systemName: "arrow.clockwise")
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(NSColor.controlBackgroundColor).opacity(0.7))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.gray.opacity(0.25), lineWidth: 1)
-                            )
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .disabled(!updaterManager.canCheckForUpdates)
                     }
                     .padding(.horizontal, 5)
                     .padding(.vertical, 10)

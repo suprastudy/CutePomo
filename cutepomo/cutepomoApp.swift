@@ -3,6 +3,18 @@ import AppKit
 import Sparkle
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    let updaterController: SPUStandardUpdaterController
+    
+    override init() {
+        updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+        super.init()
+    }
+    
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Inicializar Sparkle
+        updaterController.startUpdater()
+    }
+    
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "MainAppWindow" }) {
             window.makeKeyAndOrderFront(nil)
@@ -17,7 +29,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 struct cutepomoApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @AppStorage("alwaysOnTop") private var alwaysOnTop: Bool = false
-    @StateObject private var updaterManager = UpdaterManager.shared
+    
+    private var updaterController: SPUStandardUpdaterController {
+        return appDelegate.updaterController
+    }
     
     var body: some Scene {
         WindowGroup {
@@ -28,12 +43,11 @@ struct cutepomoApp: App {
         .defaultPosition(.center)
         .windowStyle(.hiddenTitleBar)
         .commands {
-            // App Info Commands  
+            // App Info Commands
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates...") {
-                    updaterManager.checkForUpdates()
+                    updaterController.updater.checkForUpdates()
                 }
-                .disabled(!updaterManager.canCheckForUpdates)
             }
             
             // Timer Commands

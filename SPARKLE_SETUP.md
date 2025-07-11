@@ -1,172 +1,179 @@
-# Configuración de Actualizaciones Automáticas con Sparkle
+# 🔄 Configuración de Sparkle para Actualizaciones Automáticas
 
-## ✅ **Estado Actual: Implementación Completa**
+Esta guía te ayudará a configurar completamente las actualizaciones automáticas de `cutepomo` usando Sparkle.
 
-Sparkle ha sido completamente integrado en cutepomo. La aplicación ahora incluye:
+## 📋 Prerrequisitos
 
-### 🔧 **Características Implementadas:**
+1. **Sparkle instalado en tu sistema:**
+   ```bash
+   brew install sparkle
+   ```
 
-1. **Menú de Actualizaciones**
-   - "Check for Updates..." en el menú principal
-   - Estado dinámico (habilitado/deshabilitado)
+2. **Proyecto subido a GitHub**
 
-2. **Panel de Configuración**
-   - Tab "General" en Settings
-   - Toggle para verificaciones automáticas
-   - Toggle para descargas automáticas
-   - Botón manual "Check for Updates Now"
+3. **Repositorio configurado para releases**
 
-3. **Gestión Automática**
-   - Verificación diaria automática (24 horas)
-   - Descarga automática opcional
-   - Integración nativa con macOS
+## 🚀 Configuración Inicial
 
-## 📋 **Pasos Restantes para Producción:**
-
-### 1. **Generar Claves de Firma EdDSA**
+### 1. Generar Llaves de Sparkle
 
 ```bash
-# Generar par de claves
-/path/to/Sparkle/bin/generate_keys
-
-# Esto genera:
-# - Una clave pública (para Info.plist)
-# - Una clave privada (para firmar actualizaciones)
+# Ejecutar el script para generar las llaves
+./scripts/generate_sparkle_keys.sh
 ```
 
-### 2. **Configurar Info.plist**
+Este script creará:
+- `keys/sparkle_keys` (llave privada) - ⚠️ **MANTENER SEGURA**
+- `keys/sparkle_keys.pub` (llave pública)
 
-Actualizar los valores en `cutepomo/Info.plist`:
+### 2. Actualizar Info.plist
 
+1. Copia la llave pública generada
+2. Reemplaza `PLACEHOLDER_PUBLIC_KEY` en `cutepomo/Info.plist` con la llave pública real
+3. Actualiza la URL del appcast:
+   ```xml
+   <key>SUFeedURL</key>
+   <string>https://raw.githubusercontent.com/suprastudy/CutePomo/main/appcast.xml</string>
+   ```
+
+### 3. Configurar GitHub Secrets
+
+Ve a tu repositorio en GitHub → Settings → Secrets and variables → Actions
+
+Agrega estos secrets:
+- `SPARKLE_PRIVATE_KEY`: Pega el contenido completo de `keys/sparkle_keys`
+
+### 4. Agregar Sparkle como Dependencia
+
+En Xcode:
+1. File → Add Package Dependencies
+2. Agregar: `https://github.com/sparkle-project/Sparkle`
+3. Seleccionar la versión más reciente
+4. Asegúrate de que se agrega al target principal `cutepomo`
+
+## 🔧 Proceso de Release
+
+### Opción 1: Release Automático (Recomendado)
+
+1. **Actualizar versión en Xcode:**
+   - Selecciona el proyecto en Navigator
+   - Ve a la sección "General" del target
+   - Actualiza "Version" (ej: 1.0.4)
+
+2. **Crear y push del tag:**
+   ```bash
+   git add .
+   git commit -m "Preparar release v1.0.4"
+   git push origin main
+   
+   # Crear tag
+   git tag v1.0.4
+   git push origin v1.0.4
+   ```
+
+3. **El GitHub Action se ejecutará automáticamente y:**
+   - Compilará la app
+   - Creará el ZIP
+   - Firmará el archivo
+   - Actualizará `appcast.xml`
+   - Creará el GitHub Release
+
+### Opción 2: Release Manual
+
+1. **Ejecutar GitHub Action manualmente:**
+   - Ve a GitHub → Actions → "Build and Release cutepomo"
+   - Click "Run workflow"
+   - Selecciona la branch y ejecuta
+
+## 📱 Cómo Funciona para los Usuarios
+
+1. **Primera instalación:** Los usuarios descargan e instalan manualmente
+2. **Actualizaciones automáticas:** 
+   - La app verifica actualizaciones al iniciar
+   - También verifica cada 24 horas
+   - Los usuarios pueden verificar manualmente: Menú → "Check for Updates..."
+
+## 🛠️ Personalización
+
+### Cambiar Frecuencia de Verificación
+
+En `Info.plist`:
 ```xml
-<key>SUFeedURL</key>
-<string>https://tu-dominio.com/cutepomo/appcast.xml</string>
-
-<key>SUPublicEDKey</key>
-<string>TU_CLAVE_PUBLICA_AQUI</string>
+<key>SUScheduledCheckInterval</key>
+<integer>3600</integer> <!-- 1 hora en segundos -->
 ```
 
-### 3. **Crear Appcast Feed**
+### Deshabilitar Verificación Automática
 
-Crear `appcast.xml` en tu servidor:
-
+En `Info.plist`:
 ```xml
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
-    <channel>
-        <title>cutepomo Updates</title>
-        <description>Updates for cutepomo</description>
-        <language>en</language>
-        <item>
-            <title>Version 1.0.1</title>
-            <description><![CDATA[
-                <ul>
-                    <li>Bug fixes and improvements</li>
-                </ul>
-            ]]></description>
-            <pubDate>Wed, 09 Jan 2024 19:20:11 +0000</pubDate>
-            <enclosure 
-                url="https://tu-dominio.com/cutepomo/cutepomo-1.0.1.zip"
-                sparkle:version="1.0.1"
-                sparkle:shortVersionString="1.0.1"
-                length="1623481"
-                type="application/octet-stream"
-                sparkle:edSignature="TU_FIRMA_AQUI" />
-        </item>
-    </channel>
-</rss>
+<key>SUEnableAutomaticChecks</key>
+<false/>
 ```
 
-### 4. **Firmar Actualizaciones**
+### Personalizar Descripción de Release
 
-Para cada nueva versión:
-
-```bash
-# Crear archivo zip con la nueva versión
-zip -r cutepomo-1.0.1.zip cutepomo.app
-
-# Firmar el archivo
-/path/to/Sparkle/bin/sign_update cutepomo-1.0.1.zip -f private_key
+Edita `.github/workflows/release.yml` en la sección "Update appcast.xml":
+```xml
+<description><![CDATA[
+    <h2>✨ Nueva versión disponible!</h2>
+    <ul>
+        <li>🎨 Nueva interfaz más intuitiva</li>
+        <li>🐛 Corrección de errores importantes</li>
+        <li>⚡ Mejoras de rendimiento</li>
+    </ul>
+]]></description>
 ```
 
-### 5. **Automatización con GitHub Actions** (Opcional)
+## 🔧 Solución de Problemas
 
-Crear `.github/workflows/release.yml`:
+### La app no verifica actualizaciones
 
-```yaml
-name: Release
-on:
-  push:
-    tags:
-      - 'v*'
+1. **Verificar URL del appcast:**
+   - Asegúrate de que la URL en `Info.plist` es correcta
+   - Verifica que `appcast.xml` sea accesible públicamente
 
-jobs:
-  build-and-release:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Build Release
-        run: |
-          xcodebuild -scheme cutepomo -configuration Release \
-            -archivePath cutepomo.xcarchive archive
-          
-      - name: Export App
-        run: |
-          xcodebuild -exportArchive -archivePath cutepomo.xcarchive \
-            -exportPath . -exportOptionsPlist ExportOptions.plist
-            
-      - name: Create ZIP
-        run: zip -r cutepomo-${{ github.ref_name }}.zip cutepomo.app
-        
-      - name: Sign Update
-        run: |
-          echo "$SPARKLE_PRIVATE_KEY" > private_key
-          /path/to/sparkle/bin/sign_update cutepomo-${{ github.ref_name }}.zip -f private_key
-          
-      - name: Update Appcast
-        run: |
-          # Script para actualizar appcast.xml
-          # y subirlo al servidor
-```
+2. **Verificar llave pública:**
+   - Confirma que la llave pública en `Info.plist` coincide con la generada
 
-## 🎯 **Configuraciones Actuales:**
+3. **Logs de debug:**
+   ```swift
+   // Agregar en cutepomoApp.swift para debug
+   updaterController = SPUStandardUpdaterController(
+       startingUpdater: true, 
+       updaterDelegate: nil, 
+       userDriverDelegate: nil
+   )
+   ```
 
-### Info.plist:
-- ✅ `SUEnableAutomaticChecks`: true
-- ✅ `SUAllowsAutomaticUpdates`: true  
-- ✅ `SUScheduledCheckInterval`: 86400 (24 horas)
-- ⚠️ `SUFeedURL`: Necesita URL real
-- ⚠️ `SUPublicEDKey`: Necesita clave real
+### Error de firma
 
-### Funcionalidades:
-- ✅ Verificación manual desde menú
-- ✅ Verificación manual desde Settings
-- ✅ Configuración de verificaciones automáticas
-- ✅ Configuración de descargas automáticas
-- ✅ Indicador visual de estado
+1. **Verificar secret en GitHub:**
+   - Asegúrate de que `SPARKLE_PRIVATE_KEY` está configurado correctamente
 
-## 🔒 **Seguridad:**
+2. **Regenerar llaves si es necesario:**
+   ```bash
+   ./scripts/generate_sparkle_keys.sh
+   ```
 
-- ✅ EdDSA signature verification
-- ✅ HTTPS requerido para feed
-- ✅ App Sandbox compatible
-- ✅ Hardened Runtime compatible
+### Build falla en GitHub Actions
 
-## 📝 **Notas Importantes:**
+1. **Verificar que Sparkle esté agregado correctamente en Xcode**
+2. **Revisar logs de GitHub Actions para errores específicos**
 
-1. **Clave Privada**: Nunca commitear la clave privada al repositorio
-2. **Feed URL**: Debe ser HTTPS para producción
-3. **Versioning**: Usar semantic versioning (1.0.0, 1.0.1, etc.)
-4. **Testing**: Probar con versiones de desarrollo primero
+## 📚 Recursos Adicionales
 
-## 🚀 **Para Lanzar:**
+- [Documentación oficial de Sparkle](https://sparkle-project.org/)
+- [Guía de distribución de apps macOS](https://developer.apple.com/distribution/)
+- [GitHub Actions para Xcode](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift)
 
-1. Generar claves EdDSA
-2. Configurar servidor web para hospedar appcast.xml
-3. Actualizar Info.plist con URL y clave real
-4. Crear primer appcast.xml
-5. Lanzar versión 1.0.0
-6. Para actualizaciones futuras: compilar, firmar, actualizar appcast
+## 🎯 Flujo Completo de Trabajo
 
-¡Sparkle está completamente implementado y listo para producción! 🎉 
+1. **Desarrollo:** Hacer cambios en el código
+2. **Version bump:** Actualizar versión en Xcode
+3. **Commit y push:** Subir cambios a main
+4. **Tag release:** Crear tag con versión (ej: v1.0.4)
+5. **Automático:** GitHub Actions compila, firma y publica
+6. **Usuarios:** Reciben notificación automática de actualización
+
+¡Con esto tienes un sistema completo de actualizaciones automáticas! 🎉 
