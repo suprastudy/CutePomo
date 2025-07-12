@@ -24,8 +24,7 @@
             <enclosure 
                 url="https://github.com/suprastudy/CutePomo/releases/download/v1.0.1/cutepomo-v1.0.1.zip" 
                 length="5198041" 
-                type="application/octet-stream" 
-                sparkle:edSignature="MEQCIFgQpB/n6EcqFhJqX3VF9vVJzjNR8FYCQQoJN+5nwKzOAiAaR3ZGbdH0c1tQNYH8fQ==" />
+                type="application/octet-stream" />
         </item>
         
         <!-- Versión base anterior -->
@@ -46,8 +45,7 @@
             <enclosure 
                 url="https://github.com/suprastudy/CutePomo/releases/download/v1.0.0/cutepomo-v1.0.0.zip" 
                 length="PLACEHOLDER_LENGTH" 
-                type="application/octet-stream" 
-                sparkle:edSignature="PLACEHOLDER_SIGNATURE" />
+                type="application/octet-stream" />
         </item>
         
         <!-- Ejemplo de versión anterior para referencia -->

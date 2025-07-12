@@ -46,7 +46,7 @@
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/suprastudy/CutePomo/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>V5hmCzn/r/RWmxncQaLoH9UdTaKf2pGhwzT3L+aWJUA=</string>
+	<string></string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUCheckAtStartup</key>
